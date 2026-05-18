@@ -635,23 +635,44 @@
 
 
             /**
-            * Creates a paragraph element to display the duration (length) of an audiobook 
-            * within the playlist UI.
-            *
-            * @param {string} length - The duration of the audiobook (e.g., "1h 20m" or "45:02").
-            * @returns {HTMLParagraphElement} The formatted paragraph element.
-            */
-            function generatePlaylistItemLength(length) {
-                // 1. Create a new <p> element to hold the duration text
+             * Converts a duration in seconds into a human-readable format (HH:MM:SS or MM:SS)
+             * and returns a styled paragraph element.
+             *
+             * @param {number} lengthInSeconds - The total duration of the audiobook in seconds.
+             * @returns {HTMLParagraphElement} The formatted paragraph element.
+             */
+            function generatePlaylistItemLength(lengthInSeconds) {
+                // 1. Convert input to a number and handle potential undefined values
+                const totalSeconds = parseInt(lengthInSeconds, 10) || 0;
+
+                // 2. Calculate hours, minutes, and remaining seconds
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                // 3. Format components to always have two digits (e.g., "05" instead of "5")
+                const pad = (num) => String(num).padStart(2, "0");
+
+                // 4. Determine the display format: only show hours if they exist
+                let finalDisplayString = "";
+                if (hours > 0) {
+                    // Format as H:MM:SS or HH:MM:SS
+                    finalDisplayString = `${hours}:${pad(minutes)}:${pad(seconds)}`;
+                } else {
+                    // Format as M:SS or MM:SS
+                    finalDisplayString = `${minutes}:${pad(seconds)}`;
+                }
+
+                // 5. Create a new <p> element to hold the duration text
                 const itemLength = document.createElement("p");
 
-                // 2. Add the specific class for duration styling
+                // 6. Add the specific class for duration styling
                 itemLength.classList.add("playlist-item-length");
 
-                // 3. Populate the element with the length/time data
-                itemLength.textContent = length;
+                // 7. Populate the element with the formatted time string
+                itemLength.textContent = finalDisplayString;
 
-                // 4. Return the element for placement in the DOM
+                // 8. Return the element for placement in the DOM
                 return itemLength;
             }
 
