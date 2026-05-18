@@ -349,8 +349,7 @@
 
             /**
              * Generates a folder component for the playlist that groups multiple audiobook tracks.
-             * It creates a header for the folder and populates the content area by looping through
-             * the provided file list and calling `generatePlaylistItem`.
+             * Includes a toggle mechanism to expand or collapse the folder content when clicked.
              *
              * @param {Object} folder_itemsList - The data object containing the folder name and file array.
              * @param {boolean} isCollapsed - Determines if the folder should start in a closed state.
@@ -377,22 +376,29 @@
                     playlistFolder.classList.add("collapsed");
                 }
 
-                // 5. Initialize counters and placeholders for the loop
+                // 5. Add Event Listener to toggle the collapsed state
+                playlistFolderHeader.addEventListener("click", () => {
+                    // This line checks if 'collapsed' exists; if yes, removes it. If no, adds it.
+                    playlistFolder.classList.toggle("collapsed");
+                });
+
+                // 6. Initialize counters and placeholders for the loop
                 let itemNumber = 0; 
 
-                // 6. Iterate through the files to create and append individual items
+                // 7. Iterate through the files to create and append individual items
                 folder_itemsList.files.forEach(item => {
                     itemNumber++;
 
                     // Fetch the play status from local storage for each specific file
-                    const status = getPlaylistItemStatusFromLocalStorage(item.filePath);
+                    const status = getPlaylistItemStatusFromLocalStorage(item.filename);
 
                     // Generate the actual row element using your master assembly function
+                    // Note: passing item.filename to match your JSON structure
                     const playlistItem = generatePlaylistItem(
                                                 itemNumber, 
                                                 status, 
                                                 item.title, 
-                                                item.artist, 
+                                                author, // Using the folder display_name as the artist
                                                 item.length, 
                                                 item.size_kb
                                             );
@@ -401,11 +407,11 @@
                     playlistFolderContent.appendChild(playlistItem);
                 });
 
-                // 7. Assemble the folder: Add the header and the populated content area
+                // 8. Assemble the folder: Add the header and the populated content area
                 playlistFolder.appendChild(playlistFolderHeader);
                 playlistFolder.appendChild(playlistFolderContent);
 
-                // 8. Return the fully constructed folder
+                // 9. Return the fully constructed folder
                 return playlistFolder;
             }
 
