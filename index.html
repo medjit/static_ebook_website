@@ -33,7 +33,33 @@
         <footer>
             Audiobook Player © 2026 • Your personal listening space
         </footer>
+        <script src="db/dataset.js"></script>
         <script>
+            /**
+             * Event listener that triggers when the initial HTML document has been completely 
+             * loaded and parsed. It serves as the entry point for the application.
+             */
+            window.addEventListener("DOMContentLoaded", initApp);
+
+            /**
+             * Initializes the application state and triggers the UI generation.
+             * * @function initApp
+             * @description This function logs the boot sequence and passes the core 
+             * playlist data to the rendering engine.
+             * @returns {void}
+             */
+            function initApp() {
+                // Log startup for debugging purposes
+                console.log("App starting!!!");
+
+                /**
+                 * @todo Ensure playlistData is globally accessible or 
+                 * fetched from an external API before this call.
+                 */
+                generatePlaylist(playlistData);
+            }
+
+
             /**
              * Orchestrates the generation of the entire audiobook playlist.
              * It clears the current playlist container and populates it with folders
@@ -101,7 +127,6 @@
 
                 // 5. Initialize counters and placeholders for the loop
                 let itemNumber = 0; 
-                let size = "1.33MB"; // TODO: Replace with dynamic size calculation
 
                 // 6. Iterate through the files to create and append individual items
                 folder_itemsList.files.forEach(item => {
@@ -117,7 +142,7 @@
                                                 item.title, 
                                                 item.artist, 
                                                 item.length, 
-                                                size
+                                                item.size
                                             );
 
                     // Add the finished item into the folder's content area
