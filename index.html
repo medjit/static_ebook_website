@@ -395,6 +395,7 @@
                     // Generate the actual row element using your master assembly function
                     // Note: passing item.filename to match your JSON structure
                     const playlistItem = generatePlaylistItem(
+                                                item.filename,
                                                 itemNumber, 
                                                 status, 
                                                 item.title, 
@@ -451,7 +452,7 @@
             * @param {string} size - The file size of the audio.
             * @returns {HTMLDivElement} The fully assembled playlist item row.
             */
-            function generatePlaylistItem(number, status, title, author, length, size) {
+            function generatePlaylistItem(fileName, number, status, title, author, length, size) {
                 // 1. Create the main container for the entire playlist row
                 const playlistItem = document.createElement("div");
                 playlistItem.classList.add("playlist-item");
@@ -466,8 +467,44 @@
                 playlistItem.appendChild(centerSelection);
                 playlistItem.appendChild(rightSelection);
 
-                // 4. Return the finished component, ready to be added to the list on the page
+                // 4. Add Event Listener to call play book function
+                playlistItem.addEventListener("click", () => {
+                    // Directly call the playBook function passing the current item data
+                    playBook(fileName, title, author);
+                });
+
+                // 5. Return the finished component, ready to be added to the list on the page
                 return playlistItem;
+            }
+
+            /**
+             * Loads a selected audiobook into the player, updates the UI with 
+             * the track's metadata, and begins playback.
+             * * @param {Object} track - The track object containing title, filename, and artist.
+             */
+            function playBook(fileName, title, artist) {
+                // 1. Select the UI elements from the .track-info section
+                const titleDisplay = document.querySelector(".track-info h2");
+                const artistDisplay = document.querySelector(".track-info p");
+
+                // 2. Select the audio element (Ensure you have an <audio id="main-player"> in your HTML)
+                const audioPlayer = document.querySelector("#main-player");
+
+                // 3. Update the text content with the track details
+                titleDisplay.textContent = title || "Unknown Title";
+                artistDisplay.textContent = artist || "Unknown Author";
+
+                // 4. Update the audio source and load the new file
+                // Note: Adjust the path "audio/" to wherever your files are stored
+                audioPlayer.src = `audio/${fileName}`;
+
+                // 5. Play the file and handle the Promise (to avoid browser console errors)
+                audioPlayer.play().catch(error => {
+                    console.error("Playback failed. User interaction might be required first:", error);
+                });
+
+                // 6. Log the action
+                console.log("Now playing: " + track.title);
             }
 
 
