@@ -394,7 +394,7 @@
                                                 item.title, 
                                                 item.artist, 
                                                 item.length, 
-                                                item.size
+                                                item.size_kb
                                             );
 
                     // Add the finished item into the folder's content area
@@ -657,23 +657,38 @@
 
 
             /**
-            * Creates a paragraph element to display the file size of an audiobook 
-            * within the playlist UI.
-            *
-            * @param {string} size - The size of the audiobook (e.g., "12.5 MB" or "45 KB").
-            * @returns {HTMLParagraphElement} The formatted paragraph element.
-            */
-            function generatePlaylistItemSize(size) {
-                // 1. Create a new <p> element in the document memory
+             * Converts a size in KB to the most readable format (KB, MB, or GB) 
+             * and returns a styled paragraph element.
+             *
+             * @param {number} sizeKb - The size of the file in Kilobytes.
+             * @returns {HTMLParagraphElement} The formatted paragraph element.
+             */
+            function generatePlaylistItemSize(sizeKb) {
+                // 1. Define the units and the scaling factor (1024 is standard for digital storage)
+                const units = ['KB', 'MB', 'GB'];
+                let size = parseFloat(sizeKb);
+                let unitIndex = 0;
+
+                // 2. Loop to scale the number down while it's large enough to fit the next unit
+                while (size >= 1024 && unitIndex < units.length - 1) {
+                    size /= 1024;
+                    unitIndex++;
+                }
+
+                // 3. Format the number: 0 decimals for KB, 2 decimals for MB/GB for precision
+                const formattedSize = unitIndex === 0 ? size : size.toFixed(2);
+                const finalDisplayString = `${formattedSize} ${units[unitIndex]}`;
+
+                // 4. Create a new <p> element in the document memory
                 const itemSize = document.createElement("p");
 
-                // 2. Assign the CSS class for specific styling (defined in your CSS file)
+                // 5. Assign the CSS class for specific styling
                 itemSize.classList.add("playlist-item-size");
 
-                // 3. Set the text content to the provided size string
-                itemSize.textContent = size;
+                // 6. Set the text content to the newly calculated and formatted string
+                itemSize.textContent = finalDisplayString;
 
-                // 4. Return the completed element so it can be appended to the DOM
+                // 7. Return the completed element so it can be appended to the DOM
                 return itemSize;
             }
         </script>
