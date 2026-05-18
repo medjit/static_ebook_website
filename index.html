@@ -33,5 +33,372 @@
         <footer>
             Audiobook Player © 2026 • Your personal listening space
         </footer>
+        <script>
+            /**
+             * Orchestrates the generation of the entire audiobook playlist.
+             * It clears the current playlist container and populates it with folders
+             * based on the provided data structure.
+             *
+             * @param {Object} playlistData - The main data object containing an array of folders.
+             */
+            function generatePlaylist(playlistData) {
+                console.log("GENERATE PLAYLIST: Start generating playlist.");
+
+                // 1. Locate the main container element in the DOM
+                const playlist = document.getElementById("playlist");
+
+                // 2. Safety Check: If the element doesn't exist, stop execution to prevent errors
+                if (!playlist) {
+                    console.error("GENERATE PLAYLIST: Cannot get playlist by id!!!");
+                    return;
+                }
+
+                // 3. Clear existing content to ensure a fresh render (prevents duplication)
+                playlist.innerHTML = "";
+
+                // 4. Iterate through the folder data provided in playlistData
+                playlistData.folders.forEach(folder => {
+                    // Create a folder component (set to 'false' so they start expanded by default)
+                    const playlistFolder = generatePlaylistFolder(folder, false);
+
+                    // 5. Inject the fully built folder into the main playlist container
+                    playlist.appendChild(playlistFolder);
+                });
+
+                console.log("GENERATE PLAYLIST: Playlist generated.");
+            }
+
+
+            /**
+             * Generates a folder component for the playlist that groups multiple audiobook tracks.
+             * It creates a header for the folder and populates the content area by looping through
+             * the provided file list and calling `generatePlaylistItem`.
+             *
+             * @param {Object} folder_itemsList - The data object containing the folder name and file array.
+             * @param {boolean} isCollapsed - Determines if the folder should start in a closed state.
+             * @returns {HTMLDivElement} The complete folder element with all nested playlist items.
+             */
+            function generatePlaylistFolder(folder_itemsList, isCollapsed) {
+                // 1. Extract the author/folder name or default to "Unknown"
+                const author = folder_itemsList.display_name || "Unknown";
+                console.log("GENERATE PLAYLIST FOLDER: generating folder: " + author + ".");
+
+                // 2. Create the main structural elements for the folder
+                const playlistFolder = document.createElement("div");
+                const playlistFolderHeader = document.createElement("div");
+                const playlistFolderContent = document.createElement("div");
+
+                // 3. Set up the header text and apply CSS classes for styling
+                playlistFolderHeader.textContent = author;
+                playlistFolder.classList.add("playlist-folder");
+                playlistFolderHeader.classList.add("playlist-folder-header");
+                playlistFolderContent.classList.add("playlist-folder-content");
+
+                // 4. Handle the initial visibility state (collapsed vs expanded)
+                if (isCollapsed) {
+                    playlistFolder.classList.add("collapsed");
+                }
+
+                // 5. Initialize counters and placeholders for the loop
+                let itemNumber = 0; 
+                let size = "1.33MB"; // TODO: Replace with dynamic size calculation
+
+                // 6. Iterate through the files to create and append individual items
+                folder_itemsList.files.forEach(item => {
+                    itemNumber++;
+
+                    // Fetch the play status from local storage for each specific file
+                    const status = getPlaylistItemStatusFromLocalStorage(item.filePath);
+
+                    // Generate the actual row element using your master assembly function
+                    const playlistItem = generatePlaylistItem(
+                                                itemNumber, 
+                                                status, 
+                                                item.title, 
+                                                item.artist, 
+                                                item.length, 
+                                                size
+                                            );
+
+                    // Add the finished item into the folder's content area
+                    playlistFolderContent.appendChild(playlistItem);
+                });
+
+                // 7. Assemble the folder: Add the header and the populated content area
+                playlistFolder.appendChild(playlistFolderHeader);
+                playlistFolder.appendChild(playlistFolderContent);
+
+                // 8. Return the fully constructed folder
+                return playlistFolder;
+            }
+
+
+            /**
+             * Retrieves the current status of an audiobook (e.g., "Played", "New", or a specific icon)
+             * from the browser's local storage based on its file path.
+             *
+             * NOTE: This is currently a placeholder and will be fully implemented 
+             * once the data persistence logic is finalized.
+             *
+             * @param {string} filePath - The unique path or ID of the audiobook file.
+             * @returns {string} The status string or icon character retrieved from storage.
+             */
+            function getPlaylistItemStatusFromLocalStorage(filePath) {
+                // 1. TODO: Implement logic to search localStorage using filePath as the key
+                // Example: const savedStatus = localStorage.getItem(filePath);
+
+                // 2. Currently returning a hardcoded "OK" as a placeholder for testing the UI
+                const status = "ОК"; 
+
+                // 3. Return the status value to the caller (likely generatePlaylistItem)
+                return status;
+            }
+
+
+            /**
+            * Assembles the final audiobook playlist item by combining the three main sections.
+            * This function acts as the primary builder, utilizing the Left, Center, and 
+            * Right section functions to create a structured and complete UI component.
+            *
+            * @param {number|string} number - The track number.
+            * @param {string} status - The status icon/data.
+            * @param {string} title - The audiobook title.
+            * @param {string} author - The author's name.
+            * @param {string} length - The duration of the audio.
+            * @param {string} size - The file size of the audio.
+            * @returns {HTMLDivElement} The fully assembled playlist item row.
+            */
+            function generatePlaylistItem(number, status, title, author, length, size) {
+                // 1. Create the main container for the entire playlist row
+                const playlistItem = document.createElement("div");
+                playlistItem.classList.add("playlist-item");
+
+                // 2. Build the three major sections using their respective helper functions
+                const leftSelection = generatePlaylistItemLeftSection(number, status);
+                const centerSelection = generatePlaylistItemCenterSection(title, author);
+                const rightSelection = generatePlaylistItemRightSection(length, size);
+
+                // 3. Append the sections in order: Left (Start), Center (Middle), Right (End)
+                playlistItem.appendChild(leftSelection);
+                playlistItem.appendChild(centerSelection);
+                playlistItem.appendChild(rightSelection);
+
+                // 4. Return the finished component, ready to be added to the list on the page
+                return playlistItem;
+            }
+
+
+            /**
+            * Creates a container div that groups the leading metadata of a playlist item.
+            * This function utilizes `generatePlaylistItemNumber` and `generatePlaylistItemStatus`
+            * to display the track position and current status (icon) at the start of the row.
+            *
+            * @param {number|string} number - The index or track number.
+            * @param {string} status - The status icon or data to be displayed.
+            * @returns {HTMLDivElement} The container div holding the number and status elements.
+            */
+            function generatePlaylistItemLeftSection(number, status) {
+                // 1. Create the wrapper div for the left-side layout components
+                const leftSection = document.createElement("div");
+                leftSection.classList.add("playlist-item-left-section");
+
+                // 2. Generate the track number and status icon using the specific sub-functions
+                const itemNumber = generatePlaylistItemNumber(number);
+                const itemStatus = generatePlaylistItemStatus(status);
+
+                // 3. Append the number and status elements to this left container
+                leftSection.appendChild(itemNumber);
+                leftSection.appendChild(itemStatus);
+
+                // 4. Return the assembled section for the final playlist row construction
+                return leftSection;
+            }
+
+
+            /**
+            * Creates a container div that groups the primary text information of a playlist item.
+            * This function utilizes `generatePlaylistItemTitle` and `generatePlaylistItemAuthor`
+            * to display the book's title and its creator in a central block.
+            *
+            * @param {string} title - The title of the audiobook.
+            * @param {string} author - The name of the author.
+            * @returns {HTMLDivElement} The container div holding title and author elements.
+            */
+            function generatePlaylistItemCenterSection(title, author) {
+                // 1. Create the wrapper div for the central text content
+                const centerSection = document.createElement("div");
+                centerSection.classList.add("playlist-item-center-section");
+
+                // 2. Generate the title and author elements using your specific sub-functions
+                const itemTitle = generatePlaylistItemTitle(title);
+                const itemAuthor = generatePlaylistItemAuthor(author);
+
+                // 3. Append the text elements to this central container
+                centerSection.appendChild(itemTitle);
+                centerSection.appendChild(itemAuthor);
+
+                // 4. Return the assembled section to be used in the main playlist row
+                return centerSection;
+            }
+
+
+            /**
+            * Creates a container div that groups the right-hand metadata of a playlist item.
+            * This function utilizes `generatePlaylistItemLength` and `generatePlaylistItemSize`
+            * to populate the section with duration and file size information.
+            *
+            * @param {string} length - The duration of the audiobook.
+            * @param {string} size - The file size of the audiobook.
+            * @returns {HTMLDivElement} The container div holding the length and size elements.
+            */
+            function generatePlaylistItemRightSection(length, size) {
+                // 1. Create the wrapper div for the right-side layout
+                const rightSection = document.createElement("div");
+                rightSection.classList.add("playlist-item-right-section");
+
+                // 2. Generate the individual elements using your previously defined functions
+                const itemLength = generatePlaylistItemLength(length);
+                const itemSize = generatePlaylistItemSize(size);
+
+                // 3. Append the generated elements into the right-section container
+                rightSection.appendChild(itemLength);
+                rightSection.appendChild(itemSize);
+
+                // 4. Return the assembled section
+                return rightSection;
+            }
+
+
+            /**
+            * Creates a paragraph element to display the index or track number 
+            * of an audiobook within the playlist UI.
+            *
+            * @param {string|number} number - The position of the item in the list.
+            * @returns {HTMLParagraphElement} The formatted paragraph element.
+            */
+            function generatePlaylistItemNumber(number) {
+                // 1. Create a new <p> element to hold the track number
+                const itemNumber = document.createElement("p");
+
+                // 2. Add the specific class for number styling (e.g., greyed out or small font)
+                itemNumber.classList.add("playlist-item-number");
+
+                // 3. Set the text content to the provided number
+                itemNumber.textContent = number;
+
+                // 4. Return the element to be used in the playlist item row
+                return itemNumber;
+            }
+
+
+            /**
+            * Creates a span element to display the status icon of an audiobook 
+            * (e.g., played, downloading, or current) within the playlist UI.
+            *
+            * @param {string} status - The status data or icon character/class.
+            * @returns {HTMLSpanElement} The formatted span element.
+            */
+            function generatePlaylistItemStatus(status) {
+                // 1. Create a <span> element (ideal for inline icons or short status markers)
+                const itemStatus = document.createElement("span");
+
+                // 2. Add the class for status-specific styling or icon font integration
+                itemStatus.classList.add("playlist-item-status");
+
+                // 3. Set the text content, which will represent the icon
+                itemStatus.textContent = status;
+
+                // 4. Return the span to be included in the playlist item
+                return itemStatus;
+            }
+
+
+            /**
+            * Creates a paragraph element to display the title of the audiobook 
+            * within the playlist UI.
+            *
+            * @param {string} title - The title of the audiobook.
+            * @returns {HTMLParagraphElement} The formatted paragraph element.
+            */
+            function generatePlaylistItemTitle(title) {
+                // 1. Create a new <p> element to serve as the title container
+                const itemTitle = document.createElement("p");
+
+                // 2. Add the specific class for title styling (usually bold or larger font)
+                itemTitle.classList.add("playlist-item-title");
+
+                // 3. Set the text content to the audiobook's title
+                itemTitle.textContent = title;
+
+                // 4. Return the element to be used in the playlist assembly
+                return itemTitle;
+            }
+
+
+            /**
+            * Creates a paragraph element to display the author's name 
+            * within the audiobook playlist UI.
+            *
+            * @param {string} author - The name of the audiobook author.
+            * @returns {HTMLParagraphElement} The formatted paragraph element.
+            */
+            function generatePlaylistItemAuthor(author) {
+                // 1. Create a new <p> element to hold the author's name
+                const itemAuthor = document.createElement("p");
+
+                // 2. Apply the CSS class dedicated to author styling
+                itemAuthor.classList.add("playlist-item-author");
+
+                // 3. Inject the author's name into the element
+                itemAuthor.textContent = author;
+
+                // 4. Return the element so it can be added to the playlist item container
+                return itemAuthor;
+            }
+
+
+            /**
+            * Creates a paragraph element to display the duration (length) of an audiobook 
+            * within the playlist UI.
+            *
+            * @param {string} length - The duration of the audiobook (e.g., "1h 20m" or "45:02").
+            * @returns {HTMLParagraphElement} The formatted paragraph element.
+            */
+            function generatePlaylistItemLength(length) {
+                // 1. Create a new <p> element to hold the duration text
+                const itemLength = document.createElement("p");
+
+                // 2. Add the specific class for duration styling
+                itemLength.classList.add("playlist-item-length");
+
+                // 3. Populate the element with the length/time data
+                itemLength.textContent = length;
+
+                // 4. Return the element for placement in the DOM
+                return itemLength;
+            }
+
+
+            /**
+            * Creates a paragraph element to display the file size of an audiobook 
+            * within the playlist UI.
+            *
+            * @param {string} size - The size of the audiobook (e.g., "12.5 MB" or "45 KB").
+            * @returns {HTMLParagraphElement} The formatted paragraph element.
+            */
+            function generatePlaylistItemSize(size) {
+                // 1. Create a new <p> element in the document memory
+                const itemSize = document.createElement("p");
+
+                // 2. Assign the CSS class for specific styling (defined in your CSS file)
+                itemSize.classList.add("playlist-item-size");
+
+                // 3. Set the text content to the provided size string
+                itemSize.textContent = size;
+
+                // 4. Return the completed element so it can be appended to the DOM
+                return itemSize;
+            }
+        </script>
     </body>
 </html>
